@@ -24,6 +24,47 @@
                     return col;
                 }
             });
+            function compareNestedArrays(a, b) {
+                // Compare two arrays of numbers lexicographically
+                function compareArray(x, y) {
+                    const len = Math.min(x.length, y.length);
+
+                    for (let i = 0; i < len; i++) {
+                        if (x[i] < y[i]) return -1;
+                        if (x[i] > y[i]) return 1;
+                    }
+
+                    // Shorter array comes first if prefixes are equal
+                    if (x.length < y.length) return -1;
+                    if (x.length > y.length) return 1;
+                    return 0;
+                }
+
+                const len = Math.min(a.length, b.length);
+
+                for (let i = 0; i < len; i++) {
+                    const cmp = compareArray(a[i], b[i]);
+                    if (cmp !== 0) return cmp;
+                }
+
+                // Shorter outer array comes first if prefixes are equal
+                if (a.length < b.length) return -1;
+                if (a.length > b.length) return 1;
+                return 0;
+            }
+            if (
+                compareNestedArrays(result, [
+                    [0, 0, 0],
+                    [1, 1, 1],
+                    [2, 1, 1],
+                    [3, 1, 0],
+                    [2, 0, 0],
+                ]) != -1
+            ) {
+                alert("Input matrix too powerful!");
+                return cachedmatrix;
+            }
+            // update caches
             cachedmatrix = result;
             return result;
         } catch (error) {
@@ -35,9 +76,31 @@
 <main>
     <div class="flex-vertical">
         <h1>BMS analyzer</h1>
+        <p>For TSS below (0)(1,1,1)(2,1,1)(3,1,0)(2,0,0) = EBO</p>
         <input type="text" bind:value={bmstext} />
-        <!-- <Table {matrix} /> -->
+        <!-- <div class="flex-row">
+            <button title="Buchholz's Ordinal">Ω<sub>ω</sub></button>
+            <button title="Bird's Ordinal">Ω<sub>Ω</sub></button>
+        </div> -->
         <AnalysisCanvas {matrix} />
+
+        <div class="margin-1">
+            <h2>Notes</h2>
+            <ul style="text-align: left;">
+                <li>
+                    Code can be found on my <a href="https://github.com/hemisemidemipresent/bms">Github</a>, this site
+                    was made with svelte + vite
+                </li>
+                <li>
+                    Much of the actual analysis code was ripped off from
+                    <a href="https://solarzone1010.github.io/bms-analyzer.html">Solarzone's &lt;EBO BMS analyzer</a>
+                </li>
+                <li>
+                    The math expressions are currently quite fucked and idk how to fix it (e.g. Ω<sub>0</sub> instead of 1)
+                </li>
+                <li>The css currently doesn't support super-long expressions</li>
+            </ul>
+        </div>
     </div>
 </main>
 

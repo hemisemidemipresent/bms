@@ -3,73 +3,40 @@
     let { matrix } = $props();
     import MathExpr from "./MathExpr.svelte";
     import { ElementRect } from "runed";
-    import { add, exp, eq, l, ZERO, ONE } from "./BMSUtil.js";
-    export class BMSMatrixAnalysis {
-        matrix = $state([]); //todo: get rid of all the currying of the matrix
-        // todo: cache all the functions -v done -o not done
+    import { add, exp, eq, l, s, ZERO, ONE } from "./BMSUtil.js";
+    class BMSMatrixAnalysis {
+        M = [];
+        // todo: cache all the functions
+        // u done
+        upgraders = [];
+        // v done
+        subscriptCache = [];
+        // cache of the intermediate calculation values for display purposes
+        subscriptIntermediateValues = [];
+        // o
+        ordinalCache = [];
 
         constructor(matrix) {
-            this.matrix = matrix;
-        }
+            if (!matrix) this.M = [];
+            else this.M = matrix;
+            // cache of the function below
+            this.upgraders = this.M.map((col, i) => this.U(i));
 
-        // returns the r-Parent of column n. -1 if no parent found
-        P(M, r, n) {
-            if (r == -1) {
-                return n - 1;
-            }
-            let q = this.P(M, r - 1, n);
-            while (q > -1 && M[q][r] >= M[n][r]) {
-                q = this.P(M, r - 1, q);
-            }
-            return q;
-        }
-        // cache of the function below
-        upgraders = $derived.by(() => matrix.map((col, i) => this.U(matrix, i)));
-
-        // returns the index of column that upgrades specified column
-        U(M, n) {
-            if (M[n][1] == 0 || M[n][2] == 1 || n + 1 == M.length) {
-                return;
-            }
-            let m = this.P(M, 1, n);
-            let L = [M[m][0] + 1, M[n][1], M[m][2] + 1];
-            if (this.P(M, 1, n) == this.P(M, 1, n + 1) && eq(M[n + 1], L)) {
-                return n + 1;
-            }
-            let q = n;
-            while (q != -1) {
-                q = this.P(M, 0, q);
-                if (this.P(M, 1, n) == this.P(M, 1, q) && eq(M[q], L) && M[n + 1][0] > M[q][0]) {
-                    return q;
-                }
-            }
-            return;
-        }
-        // children (specifically 0-children)
-        C(M, n) {
-            let X = [];
-            for (let i = 0; i < M.length; i++) {
-                if (this.P(M, 0, i) == n) {
-                    X.push(i);
-                }
-            }
-            return X;
-        }
-        colInfo = $derived.by(() => {
+            // main meat of calculations
             let columns = [];
-            if (!matrix) return [];
-            matrix.forEach((col, i) => {
-                const zeroParentIndex = this.P(matrix, 0, i);
+
+            this.M.forEach((col, i) => {
+                const zeroParentIndex = this.P(0, i);
                 let height = zeroParentIndex != -1 ? columns[zeroParentIndex].height + 1 : 0;
-                const oneParentIndex = this.P(matrix, 1, i);
+                const oneParentIndex = this.P(1, i);
                 let oneHeight = oneParentIndex != -1 ? columns[oneParentIndex].oneHeight + 1 : 0;
 
                 // test type of upgrader:
-                const children = this.C(matrix, i);
+                const children = this.C(i);
                 let upgraderType;
                 if (this.upgraders.includes(i)) {
                     if (children.length > 0) {
-                        if (eq(matrix[children.at(-1)], [matrix[i][0] + 1, matrix[i][1], 1])) upgraderType = "simple";
+                        if (eq(matrix[children.at(-1)], [this.M[i][0] + 1, this.M[i][1], 1])) upgraderType = "simple";
                         else upgraderType = "ancestor";
                     } else upgraderType = "simple";
                 }
@@ -77,7 +44,7 @@
                 // this is when for example in (0)(1,1,1)(2,1,1)(3,1,0), the (2,1,1) column is not "counted" per-se,
                 // but instead co-opted into the subscript of (1,1,1)
                 // there might be more cases idk
-                const parent = matrix[zeroParentIndex];
+                const parent = this.M[zeroParentIndex];
                 let isCounted = true;
                 if (parent) {
                     isCounted = !eq([parent[0] + 1, parent[1], 1], col);
@@ -93,74 +60,117 @@
                     children: children,
                     upgraderType,
                     isOrdinalValueCounted: isCounted,
-                    subscript: this.v(matrix, i),
-                    ordinalValue: this.o(matrix, i),
+                    subscript: this.v(i),
+                    ordinalValue: this.o(i),
                     subscriptIntermediateValues: this.subscriptIntermediateValues[i],
                 });
             });
-            return columns;
-        });
+            this.colInfo = columns;
+        }
 
-        subscriptCache = [];
-        // cache of the intermediate calculation values for display purposes
-        subscriptIntermediateValues = [];
-        v(M, n) {
+        // returns the r-Parent of column n. -1 if no parent found
+        P(r, n) {
+            if (r == -1) {
+                return n - 1;
+            }
+            let q = this.P(r - 1, n);
+            while (q > -1 && this.M[q][r] >= this.M[n][r]) {
+                q = this.P(r - 1, q);
+            }
+            return q;
+        }
+
+        // returns the index of column that upgrades specified column
+        U(n) {
+            if (this.M[n][1] == 0 || this.M[n][2] == 1 || n + 1 == this.M.length) {
+                return;
+            }
+            let m = this.P(1, n);
+            let L = [this.M[m][0] + 1, this.M[n][1], this.M[m][2] + 1];
+            if (this.P(1, n) == this.P(1, n + 1) && eq(this.M[n + 1], L)) {
+                return n + 1;
+            }
+            let q = n;
+            while (q != -1) {
+                q = this.P(0, q);
+                if (this.P(1, n) == this.P(1, q) && eq(this.M[q], L) && this.M[n + 1][0] > this.M[q][0]) {
+                    return q;
+                }
+            }
+            return;
+        }
+        // children (specifically 0-children)
+        C(n) {
+            let X = [];
+            for (let i = 0; i < this.M.length; i++) {
+                if (this.P(0, i) == n) {
+                    X.push(i);
+                }
+            }
+            return X;
+        }
+
+        v(n) {
             if (this.subscriptCache[n]) return this.subscriptCache[n];
 
-            if (M[n][1] == 0) {
+            if (this.M[n][1] == 0) {
                 this.subscriptCache[n] = [];
                 return [];
             }
-            if (M[n][2] == 0) {
-                let u = this.U(M, n) ? l(this.v(M, this.U(M, n))) : ONE;
+            if (this.M[n][2] == 0) {
+                let u = this.U(n) ? l(this.v(this.U(n))) : ONE;
                 this.subscriptIntermediateValues[n] = u;
-                let subscript = add(this.v(M, this.P(M, 1, n)), u);
+                let subscript = add(this.v(this.P(1, n)), u);
                 this.subscriptCache[n] = subscript;
                 return subscript;
             }
             let p = ONE;
-            let children = this.C(M, n);
+            let children = this.C(n);
             let intermediates = [];
             for (let j = 0; j < children.length; j++) {
                 let i = children[j];
-                if (!eq(M[i], [M[n][0] + 1, M[n][1], 1])) {
+                if (!eq(this.M[i], [this.M[n][0] + 1, this.M[n][1], 1])) {
                     continue;
                 }
                 let q = [];
-                for (j of this.C(M, i)) {
-                    q = add(q, this.o(M, j));
+                for (j of this.C(i)) {
+                    q = add(q, this.o(j));
                 }
                 p = add(p, exp(q));
                 intermediates.push(q);
             }
             console.log(intermediates);
             this.subscriptIntermediateValues[n] = intermediates;
-            let subscript = add(this.v(M, this.P(M, 1, n)), exp(p));
+            let subscript = add(this.v(this.P(1, n)), exp(p));
             this.subscriptCache[n] = subscript;
             return subscript;
         }
-        o(M, n) {
+        o(n) {
+            if (this.ordinalCache[n]) return this.ordinalCache[n];
+
             let S = [];
-            let children = this.C(M, n);
+            let children = this.C(n);
 
             for (let j = 0; j < children.length; j++) {
                 let i = children[j];
-                if (eq(M[i], [M[n][0] + 1, M[n][1], 1])) {
+                if (eq(this.M[i], [this.M[n][0] + 1, this.M[n][1], 1])) {
                     continue;
                 }
                 if (this.upgraders.includes(i)) {
-                    let c = this.C(M, i);
+                    let c = this.C(i);
                     if (c.length) {
-                        if (eq(M[c.at(-1)], [M[i][0] + 1, M[i][1], 1])) {
+                        if (eq(this.M[c.at(-1)], [this.M[i][0] + 1, this.M[i][1], 1])) {
                             continue;
                         }
                     } else {
                         continue;
                     }
                 }
-                S = add(S, this.o(M, i));
+                S = add(S, this.o(i));
             }
-            return [this.v(M, n), S, []];
+            let ordinal = [this.v(n), S, []];
+            this.ordinalCache[n] = ordinal;
+            return ordinal;
         }
     }
 
@@ -215,6 +225,35 @@
         {/each}
     </tbody>
 </table>
+
+<div class="margin-1">
+    <h2>Legend</h2>
+
+    <div style="display:grid; grid-template-columns: 5em 1fr; gap: 0 1em">
+        <p>Ω<sub>ω</sub></p>
+        <p style="justify-self:start; font-size: 0.75em;">ordinal notation associated with the current column</p>
+        <p class="subscript-color-none">ω</p>
+        <p style="justify-self:start; font-size: 0.75em;">ψ-subscript associated with the current column</p>
+        <p>(2,1,0)</p>
+        <p style="justify-self:start; font-size: 0.75em;">value of current column</p>
+    </div>
+
+    <div class="margin-05">
+        <p>
+            <span class="subscript-color-simple">—</span>
+            <span style="font-size: 0.9em;">Simple Upgrader</span>
+        </p>
+        <p>
+            <span class="subscript-color-ancestor">—</span>
+            <span style="font-size: 0.9em;">Ancestor Upgrader</span>
+        </p>
+        <p>
+            <span class="orange">—</span>
+            <span style="font-size: 0.9em;">idk what this is called</span>
+        </p>
+    </div>
+</div>
+
 {#if matrix}
     <div class="wrapper">
         <svg id="connections" bind:this={svgElement}>
@@ -298,7 +337,7 @@
                                 class={`subscript-annotations subscript-color-${analyzedMatrix.colInfo[analyzedMatrix.upgraders[i]]?.upgraderType || "none"}`}
                                 style:margin-right="auto"
                             >
-                                +<MathExpr obj={l(analyzedMatrix.v(matrix, analyzedMatrix.upgraders[i]))} />
+                                +<MathExpr obj={l(analyzedMatrix.colInfo[analyzedMatrix.upgraders[i]].subscript)} />
                             </span>
                         </foreignObject>
                     {:else}
@@ -318,7 +357,7 @@
                 {/if}
             {/each}
         </svg>
-        <div class="grid" style:grid-template-columns={`repeat(${analyzedMatrix.matrix.length}, 1fr)`}>
+        <div class="grid" style:grid-template-columns={`repeat(${analyzedMatrix.M.length}, 1fr)`}>
             {#each analyzedMatrix.colInfo as col, i}
                 <span
                     style:grid-column-start={i + 1}
@@ -353,15 +392,18 @@
 
 <style>
     tbody > .simple {
+        color: var(--yellow);
         background: var(--bg-yellow);
     }
     tbody > .ancestor {
+        color: var(--green);
         background: var(--bg-green);
     }
 
     .wrapper {
         position: relative;
-        width: fit-content;
+        width: minmax(min-content, 100vw);
+        overflow: auto;
     }
     #connections {
         position: absolute;

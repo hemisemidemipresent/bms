@@ -64,6 +64,7 @@
     --red: #e67e80;
     --yellow: #ddae21;
     --green: #74c365;
+    --blue: #7fbbb3;
 
     --orange: #e89068;
 
@@ -79,7 +80,7 @@ h2 {
 }
 
 h1 {
-    font-size: 56px;
+    font-size: 50px;
     letter-spacing: -1.68px;
     margin: 0;
     @media (max-width: 1024px) {
@@ -135,4 +136,27 @@ code {
     display: flex;
     flex-direction: column;
     box-sizing: border-box;
+}
+
+.flex-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+}
+
+.margin-1 {
+    margin: 1em;
+}
+
+.margin-05 {
+    margin: 0.5em;
+}
+
+a {
+    color: var(--blue);
+}
+
+ul {
+    margin: 0;
 }
