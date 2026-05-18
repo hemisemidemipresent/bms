@@ -240,6 +240,15 @@
 
     <div class="margin-05">
         <p>
+            <span>—</span>
+            <span style="font-size: 0.9em;">0-parent</span>
+        </p>
+        <p>
+            <span class="one-parent">—</span>
+            <span style="font-size: 0.9em;">1-parent</span>
+        </p>
+
+        <p>
             <span class="subscript-color-simple">—</span>
             <span style="font-size: 0.9em;">Simple Upgrader</span>
         </p>
@@ -290,7 +299,7 @@
                     {@const parentRect = bmsMatrixRowRects[col.oneParentIndex]}
                     {@const [x1, y1] = right(svgRect, parentRect, 2.5)}
                     {@const [x2, y2] = bottom(svgRect, rect, 2.5)}
-                    <path d={`M ${x1} ${y1} L ${x2} ${y1} L ${x2} ${y2}`} stroke="gray" fill="none" />
+                    <path d={`M ${x1} ${y1} L ${x2} ${y1} L ${x2} ${y2}`} class="one-parent" fill="none" />
                 {/if}
             {/each}
             <!-- additional annotations -->
@@ -475,5 +484,9 @@
     }
     .orange {
         color: var(--orange);
+    }
+    .one-parent {
+        stroke: var(--gray1);
+        color: var(--gray1);
     }
 </style>
