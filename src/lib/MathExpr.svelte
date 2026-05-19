@@ -26,8 +26,8 @@
             Ω
         {:else if iz(a[1])}
             Ω<sub><MathExpr obj={a[0]} /></sub>
-        {:else if iz(a[0])}
-            ψ<sub>0</sub>(<MathExpr obj={a[1]} />)
+            <!-- {:else if iz(a[0])} -->
+            <!-- ψ<sub>0</sub>(<MathExpr obj={a[1]} />) -->
         {:else if !eq(log([a[0], a[1], []]), [a[0], a[1], []]) && lt(log(a), [ONE, ZERO, ZERO])}
             ω<sup><MathExpr obj={log(a)} /></sup>
         {:else}
