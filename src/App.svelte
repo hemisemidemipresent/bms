@@ -17,7 +17,7 @@
 
     // let bmstext = $state("(0)(1,1,1)(2,1,1)(3,1,0)");
     let bmstext = $state("(0)(1,1,1)(2,1)(2,1)(1,1,1)");
-    // let bmstext = $state("(0)(1,1,1)(2,1)(2,1)(0)");
+    // let bmstext = $state("(0)(1,1,1)(2,1,1)(3)(2,1,1)");
     // let bmstext = $state(
     //     "(0,0,0)(1,1,1)(2,1,1)(3,1,0)(1,1,1)(2,1,1)(3,1,0)(1,1,0)(2,2,1)(3,2,1)(4,2,0)(2,2,1)(3,2,1)(4,2,0)",
     // );
@@ -28,73 +28,84 @@
     let cachedmatrix = "";
 
     let matrix = $derived.by(() => {
-        let cleanedText = bmstext
-            .replaceAll(/\s+/g, "")
-            .replaceAll(")(", "],[")
-            .replaceAll("(", "[")
-            .replaceAll(")", "]");
+        if (bmstext.includes(",")) {
+            let cleanedText = bmstext
+                .replaceAll(/\s+/g, "")
+                .replaceAll(")(", "],[")
+                .replaceAll("(", "[")
+                .replaceAll(")", "]");
 
-        try {
-            let output = JSON.parse(`[${cleanedText}]`);
+            try {
+                let output = JSON.parse(`[${cleanedText}]`);
 
-            // pad with 0s
-            let result = output.map((col) => {
-                if (col.length < 3) {
-                    col = col.concat(new Array(3 - col.length).fill(0));
+                // pad with 0s
+                let result = output.map((col) => {
+                    if (col.length < 3) {
+                        col = col.concat(new Array(3 - col.length).fill(0));
 
-                    return col;
-                } else {
-                    return col;
-                }
-            });
+                        return col;
+                    } else {
+                        return col;
+                    }
+                });
 
-            function compareNestedArrays(a, b) {
-                // Compare two arrays of numbers lexicographically
-                function compareArray(x, y) {
-                    const len = Math.min(x.length, y.length);
+                function compareNestedArrays(a, b) {
+                    // Compare two arrays of numbers lexicographically
+                    function compareArray(x, y) {
+                        const len = Math.min(x.length, y.length);
 
-                    for (let i = 0; i < len; i++) {
-                        if (x[i] < y[i]) return -1;
-                        if (x[i] > y[i]) return 1;
+                        for (let i = 0; i < len; i++) {
+                            if (x[i] < y[i]) return -1;
+                            if (x[i] > y[i]) return 1;
+                        }
+
+                        // Shorter array comes first if prefixes are equal
+                        if (x.length < y.length) return -1;
+
+                        if (x.length > y.length) return 1;
+
+                        return 0;
                     }
 
-                    // Shorter array comes first if prefixes are equal
-                    if (x.length < y.length) return -1;
+                    const len = Math.min(a.length, b.length);
 
-                    if (x.length > y.length) return 1;
+                    for (let i = 0; i < len; i++) {
+                        const cmp = compareArray(a[i], b[i]);
+
+                        if (cmp !== 0) return cmp;
+                    }
+
+                    // Shorter outer array comes first if prefixes are equal
+                    if (a.length < b.length) return -1;
+
+                    if (a.length > b.length) return 1;
 
                     return 0;
                 }
 
-                const len = Math.min(a.length, b.length);
-
-                for (let i = 0; i < len; i++) {
-                    const cmp = compareArray(a[i], b[i]);
-
-                    if (cmp !== 0) return cmp;
+                if (compareNestedArrays(result, EBO) != -1) {
+                    alert("Input matrix too powerful!");
+                    return cachedmatrix;
                 }
-
-                // Shorter outer array comes first if prefixes are equal
-                if (a.length < b.length) return -1;
-
-                if (a.length > b.length) return 1;
-
-                return 0;
-            }
-
-            if (compareNestedArrays(result, EBO) != -1) {
-                alert("Input matrix too powerful!");
-
+                // update cache
+                cachedmatrix = result;
+                return result;
+            } catch (error) {
                 return cachedmatrix;
             }
-
-            // update caches
-            cachedmatrix = result;
-
-            return result;
-        } catch (error) {
-            return cachedmatrix;
+        } else if (!bmstext.includes("(") && !bmstext.includes(")") && !bmstext.includes(",")) {
+            let cleanedText = bmstext.trim();
+            let matrix = bmstext.split(/\s+/).map((colString) => {
+                let column = [];
+                for (let i = 0; i < 3; i++) {
+                    column.push(parseInt(colString[i]) || 0);
+                }
+                return column;
+            });
+            cachedmatrix = matrix;
+            return matrix;
         }
+        return cachedmatrix;
     });
 
     let analyzedMatrix = $derived.by(() => {
