@@ -1,6 +1,6 @@
-
 export const ZERO = [];
 export const ONE = [[], [], []];
+
 export function iz(a) {
     return a.length == 0;
 }
@@ -63,7 +63,7 @@ export function exp(a) {
     let p = s(a[1], [add(a[0], ONE), [], []])[0];
     return [a[0], add(p, sub(a, [a[0], p, []])), []];
 }
-// standardize psi_a(b)
+// s(a,b) splits the terms of a into things ≥ b and things < b
 export function s(a, b) {
     if (iz(a)) {
         return [[], []];
@@ -73,7 +73,10 @@ export function s(a, b) {
     }
     return [[a[0], a[1], s(a[2], b)[0]], s(a[2], b)[1]];
 }
-// ???
+// l - last term
+// if a = 0, return 0
+// if a = ψ_b(c)+0, return a
+// else a = ψ_b(c)+d, then find l(d)
 export function l(a) {
     if (iz(a)) {
         return [];
@@ -98,4 +101,23 @@ export function log(a){
     if(eq(log(a[1]),a[1])&&iz(a[2])&&lt(a[1],[suc(a[0]),[],[]])){return [a[0],a[1],[]];}
   }
   return m;
+}
+
+// standardization magic
+function ttc(a,b){
+  if(iz(a)){return [];}
+  if(iz(ttc(a[2],b))&&lt([a[0],a[1],[]],[b,[],[]])){return [];}
+  return [a[0],a[1],ttc(a[2],b)];
+}
+function sp(a,b,c){
+  if(iz(c)){return [a,b,[]];}
+  if(lt(b,c[1])&&gt(c,[a,[],[]])){
+    let t=ttc(c[1],suc(c[0]));
+    return sp(a,add(t,sub([c[0],c[1],[]],[c[0],t,[]])),c[2]);
+  }
+  return sp(a,add(b,[c[0],c[1],[]]),c[2]);
+}
+export function sf(a){
+  if(iz(a)){return [];}
+  return add(sp(sf(a[0]),[],sf(a[1])),sf(a[2]));
 }

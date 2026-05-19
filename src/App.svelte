@@ -1,29 +1,53 @@
 <script>
-    import { onMount } from "svelte";
+    import "@fontsource-variable/jetbrains-mono/wght.css";
+    import "./app.css";
+
+    import { BMSMatrixAnalysis } from "./lib/BMSMatrixAnalysis.js";
+    import AnalysisDiagram from "./lib/AnalysisDiagram.svelte";
+    import MathExpr from "./lib/MathExpr.svelte";
     import Table from "./lib/Table.svelte";
-    import AnalysisCanvas from "./lib/AnalysisCanvas.svelte";
+
+    const EBO = [
+        [0, 0, 0],
+        [1, 1, 1],
+        [2, 1, 1],
+        [3, 1, 0],
+        [2, 0, 0],
+    ];
 
     // let bmstext = $state("(0)(1,1,1)(2,1,1)(3,1,0)");
     let bmstext = $state("(0)(1,1,1)(2,1)(2,1)(1,1,1)");
     // let bmstext = $state("(0)(1,1,1)(2,1)(2,1)(0)");
+    // let bmstext = $state(
+    //     "(0,0,0)(1,1,1)(2,1,1)(3,1,0)(1,1,1)(2,1,1)(3,1,0)(1,1,0)(2,2,1)(3,2,1)(4,2,0)(2,2,1)(3,2,1)(4,2,0)",
+    // );
+    // let bmstext = $state(
+    //     "(0,0,0)(1,1,1)(2,1,1)(3,1,0)(1,1,1)(2,1,1)(3,1,0)(1,1,0)(2,2,1)(3,2,1)(4,2,0)(2,2,1)(3,2,1)(4,2,0)(2,2,0)(3,3,1)(4,3,1)(5,3,0)(3,3,1)(4,3,1)(5,3,0)(3,3,0)(4,4,1)(5,4,1)(6,4,0)(4,4,1)(5,4,1)(6,3,0)(5,4,0)(6,5,1)(7,5,1)(8,5,0)(6,5,0)(7,6,1)(8,6,1)(9,6,0)(7,6,0)(8,7,1)(9,7,1)(10,6,0)(9,7,0)(10,8,0)",
+    // );
+
     let cachedmatrix = "";
+
     let matrix = $derived.by(() => {
         let cleanedText = bmstext
             .replaceAll(/\s+/g, "")
             .replaceAll(")(", "],[")
             .replaceAll("(", "[")
             .replaceAll(")", "]");
+
         try {
             let output = JSON.parse(`[${cleanedText}]`);
+
             // pad with 0s
             let result = output.map((col) => {
                 if (col.length < 3) {
                     col = col.concat(new Array(3 - col.length).fill(0));
+
                     return col;
                 } else {
                     return col;
                 }
             });
+
             function compareNestedArrays(a, b) {
                 // Compare two arrays of numbers lexicographically
                 function compareArray(x, y) {
@@ -36,7 +60,9 @@
 
                     // Shorter array comes first if prefixes are equal
                     if (x.length < y.length) return -1;
+
                     if (x.length > y.length) return 1;
+
                     return 0;
                 }
 
@@ -44,33 +70,39 @@
 
                 for (let i = 0; i < len; i++) {
                     const cmp = compareArray(a[i], b[i]);
+
                     if (cmp !== 0) return cmp;
                 }
 
                 // Shorter outer array comes first if prefixes are equal
                 if (a.length < b.length) return -1;
+
                 if (a.length > b.length) return 1;
+
                 return 0;
             }
-            if (
-                compareNestedArrays(result, [
-                    [0, 0, 0],
-                    [1, 1, 1],
-                    [2, 1, 1],
-                    [3, 1, 0],
-                    [2, 0, 0],
-                ]) != -1
-            ) {
+
+            if (compareNestedArrays(result, EBO) != -1) {
                 alert("Input matrix too powerful!");
+
                 return cachedmatrix;
             }
+
             // update caches
             cachedmatrix = result;
+
             return result;
         } catch (error) {
             return cachedmatrix;
         }
     });
+
+    let analyzedMatrix = $derived.by(() => {
+        standardizationSetting; //test
+        return new BMSMatrixAnalysis(matrix);
+    });
+
+    let standardizationSetting = $state(1);
 </script>
 
 <main>
@@ -82,56 +114,116 @@
             <button title="Buchholz's Ordinal">Ω<sub>ω</sub></button>
             <button title="Bird's Ordinal">Ω<sub>Ω</sub></button>
         </div> -->
-        <AnalysisCanvas {matrix} />
+
+        <h1><MathExpr obj={analyzedMatrix.finalOrdinal(true)} /></h1>
+
+        <span style="font-size: 0.9em;">
+            raw, unstandardized expression:
+            <MathExpr obj={analyzedMatrix.finalOrdinal()} />
+        </span>
+        <div></div>
+
+        <!-- <div style="text-align: left">
+            <label>
+                <input type="radio" value={0} bind:group={standardizationSetting} />
+                Keep non-standard ordinals
+            </label>
+            <br />
+            <label>
+                <input type="radio" value={1} bind:group={standardizationSetting} />
+                Only show standardized ordinals
+            </label>
+            <br />
+            <label>
+                <input type="radio" value={2} bind:group={standardizationSetting} />
+
+                Show standardization calculations
+            </label>
+        </div> -->
+        <div class="margin-1">
+            <h2>Legend</h2>
+
+            <div style="display: grid; grid-template-columns: 5em 1fr; gap: 0 1em">
+                <p>Ω<sub>ω</sub></p>
+                <p style="justify-self: start; font-size: 0.75em;">
+                    ordinal notation associated with the current column
+                </p>
+                <p style="color: var(--gray2);">ω</p>
+                <p style="justify-self:start; font-size: 0.75em;">ψ-subscript associated with the current column</p>
+                <p>(2,1,0)</p>
+                <p style="justify-self:start; font-size: 0.75em;">value of current column</p>
+            </div>
+
+            <div class="margin-05">
+                <p>
+                    <span>—</span>
+                    <span style="font-size: 0.9em;">0-parent</span>
+                </p>
+
+                <p>
+                    <span style="color: var(--gray2);">—</span>
+                    <span style="font-size: 0.9em;">1-parent</span>
+                </p>
+
+                <p>
+                    <span style="color: var(--yellow);">—</span>
+                    <span style="font-size: 0.9em;">Simple Upgrader</span>
+                </p>
+
+                <p>
+                    <span style="color: var(--green);">—</span>
+                    <span style="font-size: 0.9em;">Ancestor Upgrader</span>
+                </p>
+
+                <p>
+                    <span style="color: var(--orange);">—</span>
+                    <span style="font-size: 0.9em;">idk what this is called</span>
+                </p>
+            </div>
+        </div>
+
+        <AnalysisDiagram {analyzedMatrix} {standardizationSetting} />
+
+        <details>
+            <summary>Table</summary>
+            <Table {analyzedMatrix} />
+        </details>
 
         <div class="margin-1">
             <h2>Notes</h2>
+
             <ul style="text-align: left;">
                 <li>
-                    Code can be found on my <a href="https://github.com/hemisemidemipresent/bms">Github</a>, this site
-                    was made with svelte + vite
+                    Code can be found on my
+                    <a href="https://github.com/hemisemidemipresent/bms">Github</a>
+                    , this site was made with svelte + vite
                 </li>
+
                 <li>
                     Much of the actual analysis code was ripped off from
+
                     <a href="https://solarzone1010.github.io/bms-analyzer.html">Solarzone's &lt;EBO BMS analyzer</a>
                 </li>
-                <li>
-                    The math expressions are currently quite fucked and idk how to fix it (e.g. Ω<sub>0</sub> instead of 1)
-                </li>
-                <li>The css currently doesn't support super-long expressions</li>
             </ul>
         </div>
     </div>
 </main>
 
 <style>
-    :global(body) {
-        margin: 0;
-        background: var(--bg-dim);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        min-height: 100vh;
-        font-family: jetbrains, monospace;
-        color: #fff;
-    }
     main {
         display: flex;
         justify-content: center;
         align-items: center;
     }
-    @font-face {
-        font-family: jetbrains;
-        src: url("./assets/JetBrainsMono-Medium.ttf") format("truetype");
-        font-style: normal;
-    }
+
     .flex-vertical {
         display: flex;
         flex: flexbox;
         flex-direction: column;
         align-items: center;
     }
-    input {
+
+    input[type="text"] {
         width: 75vw;
         background: var(--bg0);
         color: white;
@@ -144,5 +236,9 @@
         @media (max-width: 1024px) {
             width: 90vw;
         }
+    }
+
+    input[type="radio"] {
+        accent-color: var(--green);
     }
 </style>
