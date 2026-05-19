@@ -15,8 +15,8 @@
 
 {#if iz(obj)}
     <span>0</span>
-{:else if iz(obj[0]) && iz(obj[1]) && iz(obj[2])}
-    <span>1</span>
+{:else if iz(obj[0]) && iz(obj[1])}
+    <span>{getCoef(obj)}</span>
 {:else}
     {@const [a, b] = s(obj, [obj[0], obj[1], []])}
     <span>
