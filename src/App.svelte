@@ -28,7 +28,8 @@
     let cachedmatrix = "";
 
     let matrix = $derived.by(() => {
-        if (bmstext.includes(",")) {
+        if (bmstext == "") return [];
+        if (bmstext.includes("(") && bmstext.includes(")")) {
             let cleanedText = bmstext
                 .replaceAll(/\s+/g, "")
                 .replaceAll(")(", "],[")
