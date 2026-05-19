@@ -95,7 +95,7 @@
             }
         } else if (!bmstext.includes("(") && !bmstext.includes(")") && !bmstext.includes(",")) {
             let cleanedText = bmstext.trim();
-            let matrix = bmstext.split(/\s+/).map((colString) => {
+            let matrix = cleanedText.split(/\s+/).map((colString) => {
                 let column = [];
                 for (let i = 0; i < 3; i++) {
                     column.push(parseInt(colString[i]) || 0);
