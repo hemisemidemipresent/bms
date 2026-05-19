@@ -123,9 +123,12 @@
                                     style:margin-right="auto"
                                 >
                                     +ω<sup>
-                                        {#each col.subscriptIntermediateValues as intermediate}
-                                            ω<sup class="orange"><MathExpr obj={intermediate} /></sup>
-                                        {/each}
+                                        1{#if col.subscriptIntermediateValues.length > 0}
+                                            +{#each col.subscriptIntermediateValues as intermediate, i}
+                                                ω<sup class="orange"><MathExpr obj={intermediate} /></sup
+                                                >{#if i < col.subscriptIntermediateValues.length - 1}+{/if}
+                                            {/each}
+                                        {/if}
                                     </sup>
                                 </span>
                             </foreignObject>

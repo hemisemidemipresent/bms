@@ -123,13 +123,14 @@ export class BMSMatrixAnalysis {
         let children = this.C(n);
         let intermediates = [];
         for (let j = 0; j < children.length; j++) {
-            let i = children[j];
-            if (!eq(this.M[i], [this.M[n][0] + 1, this.M[n][1], 1])) {
+            let childIndex = children[j];
+            if (!eq(this.M[childIndex], [this.M[n][0] + 1, this.M[n][1], 1])) {
                 continue;
             }
             let q = [];
-            for (j of this.C(i)) {
-                q = add(q, this.o(j));
+            let grandchildren = this.C(childIndex)
+            for (let k = 0; k<grandchildren.length;k++) {
+                q = add(q, this.o(grandchildren[k]));
             }
             p = add(p, exp(q));
             intermediates.push(q);
