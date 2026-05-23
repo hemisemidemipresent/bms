@@ -76,6 +76,7 @@ code {
     flex-direction: row;
     align-items: center;
     justify-content: center;
+    gap: 1em;
 }
 
 .margin-1 {
@@ -92,4 +93,12 @@ a {
 
 ul {
     margin: 0;
+}
+
+button {
+    font-family: inherit;
+    color: inherit;
+    border: 2px solid var(--bg1);
+    border-radius: 0.5em;
+    background: var(--bg0);
 }

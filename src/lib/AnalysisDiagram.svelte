@@ -11,13 +11,18 @@
         return res;
     });
 
+    let scrollContainer = $state();
+
     // DOMRects to get the width
+    // icl this is quite spaghetti but you gotta do what you gotta do
     let svgElement = $state();
-    const svgRect = new ElementRect(() => svgElement);
+    let svgRect = new ElementRect(() => svgElement);
     let bmsMatrixRows = $state([]); // collection of HTML elements
     const bmsMatrixRowRects = $derived.by(() => {
-        analyzedMatrix; // update on matrix update cause bmsMatrixRows doesnt seem to trigger it idk
+        analyzedMatrix;
         standardizationSetting;
+        scrollContainer?.scroll({ left: 0 }); // need to scroll back to the left otherwise the calculated coordinates in the svg will be misaligned
+        svgRect = new ElementRect(() => svgElement);
         return bmsMatrixRows.map((element) => new ElementRect(() => element));
     });
 
@@ -30,7 +35,7 @@
 </script>
 
 {#if analyzedMatrix}
-    <div class="scrolling-wrapper">
+    <div class="scrolling-container" bind:this={scrollContainer}>
         <div class="wrapper">
             <svg id="connections" bind:this={svgElement}>
                 <!-- 0-parent and 1-parent relationships -->
@@ -176,7 +181,7 @@
 {/if}
 
 <style>
-    .scrolling-wrapper {
+    .scrolling-container {
         max-width: 95vw;
         overflow-x: auto;
         display: inline-block;
@@ -203,6 +208,9 @@
 
     span {
         display: inline;
+        max-width: 30em;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     .bg-simple {
